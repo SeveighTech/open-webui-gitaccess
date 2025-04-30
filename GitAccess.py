@@ -368,7 +368,18 @@ class Tools:
             "Authorization": f"token {access_token}",
             "Accept": "application/vnd.github.v3+json",
         }
-        api_url = f"https://api.github.com/orgs/{owner}/repos"
+
+        # Determine the API URL based on whether it's a user or org
+        try:
+            # Try to get org info - if it fails, assume it's a user
+            user_api_url = f"https://api.github.com/orgs/{owner}"
+            response = requests.get(user_api_url, headers=headers)
+            response.raise_for_status()  # Raises HTTPError for bad responses (4xx or 5xx)
+            api_url = f"https://api.github.com/orgs/{owner}/repos"  # It's an org
+        except requests.exceptions.RequestException:
+            # If the user API call fails, assume it's an organization
+            api_url = f"https://api.github.com/users/{owner}/repos"  # It's a user
+
         try:
             response = requests.get(api_url, headers=headers)
             response.raise_for_status()
